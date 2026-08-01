@@ -57,10 +57,10 @@ Legend:
 
 | # | Task | Status |
 |---|------|--------|
-| 2.5.1 | List tools exposed by the MCP server on port `5500` | `⏳` |
-| 2.5.2 | Verify OpenAPI tool calling works through the chatbot | `⏳` |
-| 2.5.3 | Test the Chroma / RAG retrieval flow | `⏳` |
-| 2.5.4 | Document the MCP and chatbot endpoints in `docs/` | `⏳` |
+| 2.5.1 | List tools exposed by the MCP server on port `5500` | `✅` |
+| 2.5.2 | Verify OpenAPI tool calling works through the chatbot | `✅` |
+| 2.5.3 | Test the Chroma / RAG retrieval flow | `✅` |
+| 2.5.4 | Document the MCP and chatbot endpoints in `docs/` | `✅` |
 
 **Validation gate:** The MCP server returns a tool list, and the chatbot can be asked to perform an action using a tool.
 
@@ -122,7 +122,7 @@ Legend:
 
 ## Current focus
 
-Phase 1 and Phase 2.5 are the next natural steps. Before adding the gateway or the React UI, we should validate the API security and LLM tool-calling paths that are already deployed.
+Phase 1 and Phase 3 are the next natural steps. Phase 2.5 is already validated and documented in `docs/phase-2-5-validation.md`.
 
 ## Notes
 
