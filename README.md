@@ -1,5 +1,8 @@
 # crAPI-LLM Security Lab
 
+> UNDER CONSTRUCTION 🚧
+> This project is an active work in progress!
+
 A local, shareable lab for API security, LLM application security, and agentic AI demos.
 
 It combines the OWASP crAPI vulnerable API application with a remote Ollama LLM, a LangGraph-based chatbot/MCP server, and a place for custom agent and WAAP experiments.
