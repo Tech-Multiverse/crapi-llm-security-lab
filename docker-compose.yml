@@ -1,0 +1,22 @@
+include:
+  - crapi/deploy/docker/docker-compose.yml
+
+services:
+  crapi-identity:
+    ports:
+      - "${LISTEN_IP:-127.0.0.1}:8080:8080"
+
+  crapi-community:
+    ports:
+      - "${LISTEN_IP:-127.0.0.1}:8087:8087"
+
+  crapi-workshop:
+    ports:
+      - "${LISTEN_IP:-127.0.0.1}:8000:8000"
+
+  crapi-chatbot:
+    ports:
+      - "${LISTEN_IP:-127.0.0.1}:5500:5500"
+      - "${LISTEN_IP:-127.0.0.1}:5002:5002"
+    volumes:
+      - ./infrastructure/crapi-chatbot-patches/retriever_utils.py:/app/chatbot/retriever_utils.py
