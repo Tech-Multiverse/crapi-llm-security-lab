@@ -5,7 +5,7 @@
 
 A local, shareable lab for API security, LLM application security, and agentic AI demos.
 
-It combines the OWASP crAPI vulnerable API application with a remote Ollama LLM, a LangGraph-based chatbot/MCP server, and a place for custom agent and WAAP experiments.
+It combines the OWASP crAPI vulnerable API application with an Ollama LLM (local or remote), a LangGraph-based chatbot/MCP server, a custom Python agent, and an optional API gateway with traffic analysis.
 
 ## What this is for
 
@@ -28,7 +28,7 @@ The `develop` branch of OWASP crAPI includes:
 ## What we have added
 
 - A top-level `docker-compose.yml` that `include`s crAPI's compose and exposes the direct service ports for local testing.
-- A root `.env` with all the configuration in one place, including the remote Ollama IP.
+- A root `.env` with all the configuration in one place; copy it from `.env.example` and point it at your Ollama instance.
 - A `crapi-llm` Miniconda environment for Python agent development.
 - Node.js (via `nvm`) for the React UI.
 - A small patch (`infrastructure/crapi-chatbot-patches/retriever_utils.py`) that makes crAPI's chatbot use `OllamaEmbeddings` for the vector store instead of `OpenAIEmbeddings`, which sends token arrays that Ollama's OpenAI-compatible `/v1/embeddings` endpoint rejects.
@@ -51,13 +51,13 @@ Host workstation
   │       └─ api.mypremiumdealership.com
   │
   ├─ Conda env `crapi-llm`
-  ├─ Node.js / React UI (future)
-  └─ agent/ Python demos (future)
+  ├─ agent/ Python demos
+  ├─ gateway/ Kong + Prometheus + Grafana
+  └─ Node.js / React UI (future)
 
-Remote GPU machine
-  └─ Ollama
-      ├─ llama3.1:8b        (chat / tool calling)
-      └─ nomic-embed-text:latest (embeddings)
+Ollama (local install, remote GPU box, or Docker)
+  └─ llama3.1:8b        (chat / tool calling)
+  └─ nomic-embed-text:latest (embeddings)
 ```
 
 ## Network layout
@@ -78,12 +78,15 @@ Remote GPU machine
 
 ## Requirements
 
-- macOS or Linux (tested on macOS Intel / `x86_64`)
-- Docker Desktop running
+- macOS, Linux, or Windows with WSL2 / Docker Desktop (tested on macOS Intel / `x86_64`)
+- Docker running
 - Docker Compose v2.20+ (the root `docker-compose.yml` uses `include`)
 - Miniconda (optional, for local Python agent dev)
 - Node.js / `nvm` (optional, for React UI dev)
-- A separate machine with an NVIDIA GPU running Ollama, reachable from the Mac
+- Ollama reachable from Docker. Options:
+  - **Local install** on the same machine running Docker (works with CPU or GPU)
+  - **Remote machine** (e.g. Linux box with a GPU) on the same network
+  - **Docker with GPU support** (optional, requires `nvidia-container-toolkit`)
 
 ## Quick start
 
@@ -100,11 +103,12 @@ Remote GPU machine
    git clone --depth 1 --branch develop https://github.com/OWASP/crAPI.git crapi
    ```
 
-3. Copy `.env` and set your Ollama host IP:
+3. Copy `.env` and point crAPI at your Ollama server:
 
    ```bash
    cp .env.example .env
-   # edit .env and update OLLAMA_HOST_IP and CHATBOT_OPENAI_BASE_URL
+   # edit .env and set OLLAMA_HOST_IP to the IP or hostname where Ollama is reachable
+   # from the crAPI container (see "Pointing crAPI to Ollama" below for examples).
    ```
 
 4. Make sure Docker Desktop is running, then start the stack:
@@ -128,49 +132,116 @@ Remote GPU machine
      -d '{"message":"hello"}'
    ```
 
-## Changing the Ollama IP
+## Pointing crAPI to Ollama
 
-If your remote GPU machine gets a new IP, update only `.env`:
+The chatbot and agent use the OpenAI-compatible endpoint that Ollama exposes on port `11434`. Update `.env` so the crAPI container can reach it.
+
+Common setups:
+
+| Where Ollama runs | `OLLAMA_HOST_IP` value | Notes |
+|---------------------|-------------------------|-------|
+| Same host as Docker Desktop (macOS/Windows) | `host.docker.internal` | Docker Desktop resolves this to the host. |
+| Same host, Linux Docker Engine | LAN IP of the host (e.g. `192.168.1.42`) or `172.17.0.1` | `host.docker.internal` is not automatic on Linux Docker Engine. |
+| Remote GPU box / another machine | Its IP (e.g. `192.168.1.50`) | Firewall must allow TCP `11434` from the Docker host. |
+
+For example, with a remote GPU machine:
 
 ```bash
-OLLAMA_HOST_IP=<new-ip>
-CHATBOT_OPENAI_BASE_URL=http://<new-ip>:11434/v1/
+OLLAMA_HOST_IP=192.168.1.50
+CHATBOT_OPENAI_BASE_URL=http://${OLLAMA_HOST_IP}:11434/v1/
 ```
 
-Then recreate the chatbot container:
+For a local Ollama on Docker Desktop macOS/Windows:
+
+```bash
+OLLAMA_HOST_IP=host.docker.internal
+CHATBOT_OPENAI_BASE_URL=http://${OLLAMA_HOST_IP}:11434/v1/
+```
+
+For the agent running on the host (not in Docker), you can also export:
+
+```bash
+export OLLAMA_BASE_URL=http://${OLLAMA_HOST_IP}:11434/v1
+```
+
+After editing `.env`, recreate the chatbot container:
 
 ```bash
 docker compose up -d
 ```
 
-## Ollama setup on the GPU machine
+## Ollama setup
 
-Recommended for an RTX 4060 with 8 GB VRAM:
+These instructions work on Linux, macOS, or Windows (with WSL2 / Docker). They assume you want to keep everything self-hosted; no third-party LLM API account is needed.
+
+### 1. Install Ollama
+
+Follow the official guide for your OS:
+
+```bash
+# macOS / Linux
+curl -fsSL https://ollama.com/install.sh | sh
+
+# Windows: use the installer from https://ollama.com/download/windows
+# or run inside WSL2 with the same command as Linux.
+```
+
+### 2. Pull the models
+
+Recommended models that fit on an 8 GB GPU or a CPU host:
 
 ```bash
 ollama pull llama3.1:8b
 ollama pull nomic-embed-text:latest
 ```
 
-Expose Ollama to the local network:
+### 3. Expose Ollama to the network
+
+By default Ollama only listens on `127.0.0.1:11434`. If you run crAPI in Docker, the container needs to reach it, so bind to all interfaces:
 
 ```bash
 OLLAMA_HOST=0.0.0.0 ollama serve
 ```
 
-Make sure the host firewall allows inbound TCP `11434` from the Mac's subnet.
+On Windows Command Prompt:
 
-If you want models on a specific drive (e.g. `D:/OllamaModels` on Windows), set:
+```cmd
+set OLLAMA_HOST=0.0.0.0
+ollama serve
+```
 
-```bash
+On Windows PowerShell:
+
+```powershell
+$env:OLLAMA_HOST="0.0.0.0"
+ollama serve
+```
+
+If Ollama is on a remote machine, make sure the host firewall allows inbound TCP `11434` from the Docker host's subnet.
+
+### 4. Optional: store models on a different drive
+
+On Windows:
+
+```cmd
 set OLLAMA_MODELS=D:\OllamaModels
 ```
 
-or for WSL2 / Linux:
+On Linux / WSL2:
 
 ```bash
 export OLLAMA_MODELS=/mnt/d/OllamaModels
 ```
+
+## Tested configuration
+
+This repo was developed with:
+
+- A Mac host running Docker Desktop
+- A separate Linux machine with an NVIDIA GPU running Ollama (`llama3.1:8b` and `nomic-embed-text:latest`)
+- The Mac reaching Ollama over the LAN at `http://192.168.4.55:11434/v1`
+
+Any setup where Docker can reach Ollama at the URL you put in `.env` should work the same way.
 
 ## Why the `retriever_utils.py` patch?
 
@@ -206,9 +277,9 @@ crAPI-LLM/
 ├── .env                           # Docker Compose environment
 ├── docker-compose.yml             # includes crAPI + port overrides + patch mount
 ├── README.md                      # this file
-├── agent/                         # (future) custom Python agent
-├── docs/                          # (future) write-ups and mapping
-├── gateway/                       # (future) API gateway / WAAP configs
+├── agent/                         # custom Python agent demos
+├── docs/                          # write-ups and challenge mapping
+├── gateway/                       # Kong + Prometheus + Grafana configs
 ├── infrastructure/                # support files for the lab
 │   └── crapi-chatbot-patches/
 │       └── retriever_utils.py     # Ollama embedding fix
@@ -236,8 +307,8 @@ curl -s -X POST http://127.0.0.1:5002/chatbot/genai/ask \
   -H "Content-Type: application/json" \
   -d '{"message":"hello"}'
 
-# Test Ollama from the Mac
-curl http://<ollama-ip>:11434/api/tags
+# Test Ollama from the Docker host
+curl http://${OLLAMA_HOST_IP}:11434/api/tags
 ```
 
 ## License
