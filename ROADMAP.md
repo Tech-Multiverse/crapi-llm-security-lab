@@ -84,11 +84,11 @@ Legend:
 
 | # | Task | Status |
 |---|------|--------|
-| 4.1 | Select an agent framework (Pydantic AI, LangChain, or plain OpenAI client) | `⏳` |
-| 4.2 | Implement a minimal agent that can sign up, log in, and list vehicles | `⏳` |
-| 4.3 | Add tool-calling support so the agent can use crAPI endpoints | `⏳` |
-| 4.4 | Demonstrate a prompt-injection or overpermissive tool call | `⏳` |
-| 4.5 | Write `agent/README.md` with setup and run instructions | `⏳` |
+| 4.1 | Select an agent framework (Pydantic AI, LangChain, or plain OpenAI client) | `✅` |
+| 4.2 | Implement a minimal agent that can sign up, log in, and list vehicles | `✅` |
+| 4.3 | Add tool-calling support so the agent can use crAPI endpoints | `✅` |
+| 4.4 | Demonstrate a prompt-injection or overpermissive tool call | `✅` |
+| 4.5 | Write `agent/README.md` with setup and run instructions | `✅` |
 
 **Validation gate:** Running one command starts the agent and it successfully makes an authenticated crAPI API call via Ollama.
 
@@ -122,7 +122,7 @@ Legend:
 
 ## Current focus
 
-Phase 1 and Phase 3 are complete. The next natural step is Phase 4 — building a custom Python agent that drives crAPI through Ollama.
+Phases 1, 3, and 4 are complete. The next natural step is Phase 5 — adding an API gateway / WAAP in front of crAPI and traffic analysis.
 
 ## Notes
 
