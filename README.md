@@ -30,8 +30,10 @@ The `develop` branch of OWASP crAPI includes:
 - A top-level `docker-compose.yml` that `include`s crAPI's compose and exposes the direct service ports for local testing.
 - A root `.env` with all the configuration in one place; copy it from `.env.example` and point it at your Ollama instance.
 - A `crapi-llm` Miniconda environment for Python agent development.
-- Node.js (via `nvm`) for the React UI.
 - A small patch (`infrastructure/crapi-chatbot-patches/retriever_utils.py`) that makes crAPI's chatbot use `OllamaEmbeddings` for the vector store instead of `OpenAIEmbeddings`, which sends token arrays that Ollama's OpenAI-compatible `/v1/embeddings` endpoint rejects.
+- A `agent/` directory with a custom Python agent that drives crAPI through Ollama.
+- A `gateway/` directory with a Kong gateway, rate limiting, a WAF-style path block, Prometheus metrics, and a Grafana dashboard.
+- A `ui/` directory with a Vite + React demo interface, plus `scripts/` with one-click attack/defense scenario scripts.
 
 ## Architecture
 
@@ -53,10 +55,10 @@ Host workstation
   ├─ Conda env `crapi-llm`
   ├─ agent/ Python demos
   ├─ gateway/ Kong + Prometheus + Grafana
-  └─ Node.js / React UI (future)
+  └─ ui/ Vite + React demo interface
 
 Ollama (local install, remote GPU box, or Docker)
-  └─ llama3.1:8b        (chat / tool calling)
+  ├─ llama3.1:8b        (chat / tool calling)
   └─ nomic-embed-text:latest (embeddings)
 ```
 
@@ -74,7 +76,11 @@ Ollama (local install, remote GPU box, or Docker)
   - `http://127.0.0.1:5002`   chatbot API (`/chatbot/genai/ask`)
   - `http://127.0.0.1:5500`   MCP server
   - `http://127.0.0.1:8025`   MailHog UI
-- The `crapi-chatbot` container exits the Docker network through Docker Desktop NAT to reach Ollama on the remote GPU machine.
+  - `http://127.0.0.1:3001`   React demo UI (`crapi-ui`)
+  - `http://127.0.0.1:8088`   Kong gateway proxy
+  - `http://127.0.0.1:13000`  Grafana (admin/admin)
+  - `http://127.0.0.1:19090`  Prometheus
+- The `crapi-chatbot` container exits the Docker network to reach Ollama wherever it is running (local host, another container, or a remote GPU machine).
 
 ## Requirements
 
@@ -111,7 +117,7 @@ Ollama (local install, remote GPU box, or Docker)
    # from the crAPI container (see "Pointing crAPI to Ollama" below for examples).
    ```
 
-4. Make sure Docker Desktop is running, then start the stack:
+4. Make sure Docker Desktop is running, then start the stack (this also starts the gateway, Grafana, and React UI):
 
    ```bash
    docker compose up -d
@@ -124,7 +130,9 @@ Ollama (local install, remote GPU box, or Docker)
    curl -s -o /dev/null -w "HTTP %{http_code}\n" http://127.0.0.1:8888
    ```
 
-6. Test the chatbot:
+6. Open the demo UI at `http://127.0.0.1:3001`.
+
+7. Test the chatbot from the command line:
 
    ```bash
    curl -s -X POST http://127.0.0.1:5002/chatbot/genai/ask \
@@ -249,26 +257,45 @@ crAPI's chatbot is hard-coded to use `OpenAIEmbeddings` for the `openai` provide
 
 The patch in `infrastructure/crapi-chatbot-patches/retriever_utils.py` swaps in `OllamaEmbeddings` whenever a non-default `CHATBOT_OPENAI_BASE_URL` is set, and it is mounted over `/app/chatbot/retriever_utils.py` in the `crapi-chatbot` container.
 
+## React demo UI and scenario scripts
+
+A Vite + React UI is bundled as the `crapi-ui` container and served on port `3001`:
+
+- **Chatbot** tab — talk to the crAPI chatbot through Ollama.
+- **API Explorer** tab — send requests directly to crAPI endpoints.
+- **Scenarios** tab — replay attack/defense demos with one click (rate-limit DoS, SSRF block, prompt injection, NoSQL coupon injection).
+
+Open `http://127.0.0.1:3001` after `docker compose up -d`.
+
+Command-line equivalents live in `scripts/`:
+
+```bash
+./scripts/rate-limit-demo.sh
+./scripts/ssrf-blocked-demo.sh
+./scripts/prompt-injection-demo.sh
+./scripts/agent-demo.sh
+```
+
 ## Roadmap and future additions
 
 For the full phased plan, see `ROADMAP.md`.
 
-crAPI gives us the vulnerable API and a built-in LLM chatbot, but it does **not** cover the full WAAP, runtime-security, and traffic-analysis story. Recommended additions:
+crAPI gives us the vulnerable API and a built-in LLM chatbot. This repo extends it with an Ollama-backed agent, a Kong gateway with metrics, and a React demo UI. Possible next additions:
 
-1. **API gateway / WAAP layer**  
-   Put Kong, Traefik, Envoy, or open-appsec in front of crAPI with rate limiting, JWT validation, WAF rules, and request/response logging. This maps to the WAAP, API gateway, and runtime security requirements.
+1. **WAAP / ModSecurity / open-appsec**  
+   Replace or augment the simple Kong path block with a real WAAP engine and OWASP CRS rules.
 
-2. **Traffic analysis and observability**  
-   Add `Grafana` + `Loki` + `Prometheus` or `Vector` to collect and visualize API and agent traffic. This is needed for "runtime security" and "traffic analysis."
+2. **Centralized log analysis**  
+   Add Loki, Vector, or ClickHouse to collect request/response bodies and agent logs for forensic replay.
 
-3. **Custom agent demo**  
-   Build a small Python agent (Pydantic AI or LangChain) that calls crAPI endpoints via Ollama. The built-in chatbot is LangGraph; a second, simpler agent is useful for explaining "agent discovery," "agent-to-tool," and "agent-to-API" clearly.
+3. **LLM guardrails**  
+   Experiment with input/output filtering, prompt-injection detection, and tool-call confirmation UIs.
 
-4. **React UI**  
-   A Vite + React frontend that shows the agent, the live API calls, and browser DevTools network traffic. This makes demos for non-technical audiences much more compelling.
+4. **Advanced agentic demos**  
+   Multi-step agent attacks, autonomous discovery, and agent-to-agent workflows.
 
-5. **Write-ups**  
-   Map every crAPI challenge to the OWASP API Top 10 2023, the OWASP Top 10 for LLM Applications, and plausible WAAP or API gateway mitigations.
+5. **Write-ups refresh**  
+   Keep mapping new challenges and mitigations to OWASP API Security, OWASP LLM / AI security risks, and NIST AI RMF.
 
 ## Project layout
 
@@ -280,6 +307,7 @@ crAPI-LLM/
 ├── agent/                         # custom Python agent demos
 ├── docs/                          # write-ups and challenge mapping
 ├── gateway/                       # Kong + Prometheus + Grafana configs
+├── scripts/                       # one-click attack/defense scenario scripts
 ├── infrastructure/                # support files for the lab
 │   └── crapi-chatbot-patches/
 │       └── retriever_utils.py     # Ollama embedding fix

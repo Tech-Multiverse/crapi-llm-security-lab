@@ -112,17 +112,17 @@ Legend:
 
 | # | Task | Status |
 |---|------|--------|
-| 6.1 | Initialize a Vite + React project in `ui/` | `⏳` |
-| 6.2 | Build a simple chat / API explorer interface | `⏳` |
-| 6.3 | Connect the UI to the chatbot and direct crAPI endpoints | `⏳` |
-| 6.4 | Create attack / defense scenario scripts | `⏳` |
-| 6.5 | Final `README.md` refresh, demo recording, and release notes | `⏳` |
+| 6.1 | Initialize a Vite + React project in `ui/` | `✅` |
+| 6.2 | Build a simple chat / API explorer interface | `✅` |
+| 6.3 | Connect the UI to the chatbot and direct crAPI endpoints | `✅` |
+| 6.4 | Create attack / defense scenario scripts | `✅` |
+| 6.5 | Final `README.md` refresh, demo recording, and release notes | `✅` |
 
 **Validation gate:** A non-technical user can run `docker compose up` and open `http://127.0.0.1:8888` or the React UI to see the lab in action.
 
 ## Current focus
 
-Phases 1, 3, 4, and 5 are complete. The remaining major piece is Phase 6 — a React UI and packaging for demo.
+All planned phases are complete. The lab is ready for demo and sharing. Future work is tracked in the README under "Roadmap and future additions."
 
 ## Notes
 
