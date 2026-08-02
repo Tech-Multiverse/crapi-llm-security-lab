@@ -1,7 +1,6 @@
 # crAPI-LLM Security Lab
 
-> UNDER CONSTRUCTION 🚧
-> This project is an active work in progress!
+> 🎬 Project article and video walkthrough(s) coming soon — stay tuned!
 
 A local, shareable lab for API security, LLM application security, and agentic AI demos.
 
@@ -11,8 +10,8 @@ It combines the OWASP crAPI vulnerable API application with an Ollama LLM (local
 
 This lab is a local, shareable environment for learning and practicing API security, LLM application security, and agentic AI security. It is meant to be:
 
-- **Reproducible**: one `docker compose up` gets crAPI running.
-- **Extensible**: add custom agents, a React UI, an API gateway/WAAP, and traffic analysis as phases.
+- **Reproducible**: one `docker compose up` gets crAPI, the agent, the gateway, and the demo UI running.
+- **Extensible**: built to add WAAP engines, centralized logging, LLM guardrails, and more advanced agent workflows.
 - **Pedagogical**: directly maps to the OWASP API Security Top 10, OWASP LLM / AI security risks, WAAP and runtime security concepts, and agent-to-API/tool interactions.
 
 ## What crAPI (develop branch) gives us
@@ -308,11 +307,11 @@ crAPI-LLM/
 ├── docs/                          # write-ups and challenge mapping
 ├── gateway/                       # Kong + Prometheus + Grafana configs
 ├── scripts/                       # one-click attack/defense scenario scripts
-├── infrastructure/                # support files for the lab
+├── infrastructure/               # support files for the lab
 │   └── crapi-chatbot-patches/
-│       └── retriever_utils.py     # Ollama embedding fix
-├── ui/                            # (future) React UI
-└── crapi/                         # cloned OWASP crAPI (develop branch)
+│       └── retriever_utils.py    # Ollama embedding fix
+├── ui/                           # Vite + React demo interface
+└── crapi/                        # cloned OWASP crAPI (develop branch)
 ```
 
 ## Useful commands
