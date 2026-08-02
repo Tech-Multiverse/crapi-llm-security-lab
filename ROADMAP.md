@@ -31,7 +31,7 @@ Legend:
 |---|------|--------|
 | 1.1 | Deploy crAPI and map services/ports | `✅` |
 | 1.2 | Challenge 1–5 walkthrough | `✅` |
-| 1.3 | Challenge 6–10 walkthrough | `⏳` |
+| 1.3 | Challenge 6–10 walkthrough | `✅` |
 | 1.4 | Challenge 11–15 walkthrough | `⏳` |
 | 1.5 | Document each finding in `docs/` with endpoint, payload, and mitigation | `✅` |
 
