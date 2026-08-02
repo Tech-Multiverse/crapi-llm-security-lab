@@ -32,7 +32,7 @@ Legend:
 | 1.1 | Deploy crAPI and map services/ports | `✅` |
 | 1.2 | Challenge 1–5 walkthrough | `✅` |
 | 1.3 | Challenge 6–10 walkthrough | `✅` |
-| 1.4 | Challenge 11–15 walkthrough | `⏳` |
+| 1.4 | Challenge 11–15 walkthrough | `✅` |
 | 1.5 | Document each finding in `docs/` with endpoint, payload, and mitigation | `✅` |
 
 **Validation gate:** For each completed block, at least one challenge can be reproduced with `curl` or `httpie`.
@@ -122,7 +122,7 @@ Legend:
 
 ## Current focus
 
-Phase 1 and Phase 3 are the next natural steps. Phase 2.5 is already validated and documented in `docs/phase-2-5-validation.md`.
+Phase 1 is complete. Phase 3 (LLM challenges 16–18 and prompt-injection tests) is the next natural step.
 
 ## Notes
 
