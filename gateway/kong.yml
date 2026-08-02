@@ -1,0 +1,60 @@
+_format_version: "3.0"
+_transform: true
+
+# Kong DB-less declarative configuration.
+# This gateway sits in front of crAPI's web proxy (crapi-web:80) and adds
+# rate limiting, request-size limits, Prometheus metrics, and a basic
+# path-based block for a known attack endpoint.
+
+plugins:
+  - name: prometheus
+    config:
+      status_code_metrics: true
+      latency_metrics: true
+      bandwidth_metrics: true
+      upstream_health_metrics: true
+      per_consumer: false
+
+services:
+  - name: crapi-web
+    url: http://crapi-web:80
+    routes:
+      - name: crapi-catch-all
+        paths:
+          - /
+        strip_path: false
+        preserve_host: false
+        plugins:
+          - name: rate-limiting
+            config:
+              minute: 10
+              policy: local
+              fault_tolerant: true
+              hide_client_headers: false
+          - name: request-size-limiting
+            config:
+              allowed_payload_size: 128
+              size_unit: kilobytes
+              require_content_length: false
+
+  # Explicitly block the merchant contact-mechanic endpoint at the gateway.
+  # This endpoint is the SSRF / layer-7 DoS primitive used in crAPI challenges.
+  - name: waf-block-contact-mechanic
+    url: http://crapi-web:80
+    routes:
+      - name: contact-mechanic-block
+        paths:
+          - /workshop/api/merchant/contact_mechanic
+        strip_path: false
+        preserve_host: false
+        regex_priority: 100
+        plugins:
+          - name: request-termination
+            config:
+              status_code: 403
+              message: "Blocked by gateway WAF rule"
+
+consumers:
+  - username: anonymous-monitor
+    tags:
+      - monitor

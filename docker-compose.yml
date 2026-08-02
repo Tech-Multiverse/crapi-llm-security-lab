@@ -20,3 +20,72 @@ services:
       - "${LISTEN_IP:-127.0.0.1}:5002:5002"
     volumes:
       - ./infrastructure/crapi-chatbot-patches/retriever_utils.py:/app/chatbot/retriever_utils.py
+
+  kong:
+    container_name: kong
+    image: kong:3.7.1
+    environment:
+      - KONG_DATABASE=off
+      - KONG_DECLARATIVE_CONFIG=/kong/declarative/kong.yml
+      - KONG_PROXY_ACCESS_LOG=/dev/stdout
+      - KONG_ADMIN_ACCESS_LOG=/dev/stdout
+      - KONG_PROXY_ERROR_LOG=/dev/stderr
+      - KONG_ADMIN_ERROR_LOG=/dev/stderr
+      - KONG_ADMIN_LISTEN=0.0.0.0:8001
+      - KONG_ADMIN_GUI_LISTEN=0.0.0.0:8002
+      - KONG_PLUGINS=bundled
+      - KONG_NGINX_WORKER_PROCESSES=1
+    ports:
+      - "${LISTEN_IP:-127.0.0.1}:8088:8000"
+      - "${LISTEN_IP:-127.0.0.1}:18001:8001"
+    volumes:
+      - ./gateway/kong.yml:/kong/declarative/kong.yml:ro
+    depends_on:
+      crapi-web:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "kong", "health"]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+
+  prometheus:
+    container_name: prometheus
+    image: prom/prometheus:v2.53.0
+    ports:
+      - "${LISTEN_IP:-127.0.0.1}:19090:9090"
+    volumes:
+      - ./gateway/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    depends_on:
+      kong:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          cpus: '0.3'
+          memory: 512M
+
+  grafana:
+    container_name: grafana
+    image: grafana/grafana:11.0.0
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_USERS_ALLOW_SIGN_UP=false
+    ports:
+      - "${LISTEN_IP:-127.0.0.1}:13000:3000"
+    volumes:
+      - ./gateway/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./gateway/grafana/dashboards:/var/lib/grafana/dashboards:ro
+    depends_on:
+      prometheus:
+        condition: service_started
+    deploy:
+      resources:
+        limits:
+          cpus: '0.3'
+          memory: 256M

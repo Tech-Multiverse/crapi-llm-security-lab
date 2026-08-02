@@ -98,11 +98,11 @@ Legend:
 
 | # | Task | Status |
 |---|------|--------|
-| 5.1 | Choose a gateway (Kong, Traefik, Envoy, open-appsec, or Caddy with plugins) | `⏳` |
-| 5.2 | Deploy the gateway in front of crAPI | `⏳` |
-| 5.3 | Configure rate limiting, JWT validation, or basic WAF rules | `⏳` |
-| 5.4 | Capture and replay an attack through the gateway | `⏳` |
-| 5.5 | Add traffic analysis (Grafana / Loki / Prometheus or `Vector` + `ClickHouse`) | `⏳` |
+| 5.1 | Choose a gateway (Kong, Traefik, Envoy, open-appsec, or Caddy with plugins) | `✅` |
+| 5.2 | Deploy the gateway in front of crAPI | `✅` |
+| 5.3 | Configure rate limiting, JWT validation, or basic WAF rules | `✅` |
+| 5.4 | Capture and replay an attack through the gateway | `✅` |
+| 5.5 | Add traffic analysis (Grafana / Loki / Prometheus or `Vector` + `ClickHouse`) | `✅` |
 
 **Validation gate:** A known crAPI attack is blocked or logged by the gateway, and the event is visible in the analysis dashboard.
 
@@ -122,7 +122,7 @@ Legend:
 
 ## Current focus
 
-Phases 1, 3, and 4 are complete. The next natural step is Phase 5 — adding an API gateway / WAAP in front of crAPI and traffic analysis.
+Phases 1, 3, 4, and 5 are complete. The remaining major piece is Phase 6 — a React UI and packaging for demo.
 
 ## Notes
 
