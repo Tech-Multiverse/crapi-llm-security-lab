@@ -70,11 +70,11 @@ Legend:
 
 | # | Task | Status |
 |---|------|--------|
-| 3.1 | Challenge 16 — prompt injection | `⏳` |
-| 3.2 | Challenge 17 — credential extraction | `⏳` |
-| 3.3 | Challenge 18 — action on behalf of another user | `⏳` |
-| 3.4 | Additional prompt-injection and jailbreak tests | `⏳` |
-| 3.5 | Document mitigations for each class of LLM attack | `⏳` |
+| 3.1 | Challenge 16 — prompt injection | `✅` |
+| 3.2 | Challenge 17 — credential extraction | `✅` |
+| 3.3 | Challenge 18 — action on behalf of another user | `✅` |
+| 3.4 | Additional prompt-injection and jailbreak tests | `✅` |
+| 3.5 | Document mitigations for each class of LLM attack | `✅` |
 
 **Validation gate:** Each challenge can be reproduced and the prompt / response chain is captured.
 
@@ -122,7 +122,7 @@ Legend:
 
 ## Current focus
 
-Phase 1 is complete. Phase 3 (LLM challenges 16–18 and prompt-injection tests) is the next natural step.
+Phase 1 and Phase 3 are complete. The next natural step is Phase 4 — building a custom Python agent that drives crAPI through Ollama.
 
 ## Notes
 
