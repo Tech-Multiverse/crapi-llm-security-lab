@@ -115,7 +115,7 @@ We tested several small (4B-8B) Ollama models against both agent implementations
 
 | Model | `simple_agent.py` (JSON-action prompt) | `ollama_agent.py` (native `tools=`) |
 |---|---|---|
-| `llama3.1:8b` | Reliable | Reliable |
+| `llama3.1:8b` | Reliable — completed sign-up/log-in/dashboard cleanly. | Unreliable — after a duplicate-email `403`, it responded with explanatory text containing embedded pseudo-JSON (e.g. `{"name": "sign_up", "parameters": {...}}` inside a plain-text message) instead of actually issuing a new tool call, ending the task without retrying or completing it. |
 | `nemotron-3-nano:4b` | Failed — hallucinated a `done` result on the first turn without ever calling a tool, in every run. | Unreliable — called tools correctly at first, but after a successful `log_in`, invented a corrupted-but-plausible-looking JWT for the next call instead of reusing the real one, then stopped without retrying or completing the task. |
 | `llama3-groq-tool-use:8b` | Failed — emitted all four actions as separate concatenated JSON objects in a single response instead of one action at a time, so the JSON parser never got a valid single object and no tool was ever called. | Unreliable — repeatedly asked for confirmation or restated the user's request instead of invoking a tool, even when given complete, explicit account details. |
 | `qwen2.5:7b` | Reliable, including self-correcting retries after a "number already registered" error. | Reliable. In one run, a `list_vehicles` call was retried with a slightly different JWT, but the agent recovered by re-authenticating and completed the full task with accurate data. |
