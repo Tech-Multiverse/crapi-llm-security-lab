@@ -23,7 +23,18 @@ from crapi_client import (
     sign_up,
 )
 
-DEFAULT_BASE_URL = os.getenv("OLLAMA_BASE_URL", "http://192.168.4.55:11434/v1")
+def _default_base_url() -> str:
+    """Prefer an explicit OLLAMA_BASE_URL, otherwise derive one from OLLAMA_HOST_IP
+    (the same variable used to configure the crapi-chatbot container)."""
+    if os.getenv("OLLAMA_BASE_URL"):
+        return os.environ["OLLAMA_BASE_URL"]
+    host_ip = os.getenv("OLLAMA_HOST_IP")
+    if host_ip:
+        return f"http://{host_ip}:11434/v1"
+    return "http://127.0.0.1:11434/v1"
+
+
+DEFAULT_BASE_URL = _default_base_url()
 DEFAULT_MODEL = os.getenv("OLLAMA_MODEL", "llama3.1:8b")
 DEFAULT_API_KEY = os.getenv("OPENAI_API_KEY", "x")
 

@@ -20,17 +20,22 @@ conda activate crapi-llm
 pip install -r agent/requirements.txt
 ```
 
-Make sure the remote Ollama server is reachable and has `llama3.1:8b` loaded. The agent defaults to:
+Make sure the remote Ollama server is reachable and has `llama3.1:8b` loaded. The agent resolves its base URL in this order:
 
-- `OLLAMA_BASE_URL=http://192.168.4.55:11434/v1`
-- `OLLAMA_MODEL=llama3.1:8b`
+1. `OLLAMA_BASE_URL` if set (full URL, e.g. `http://192.168.1.50:11434/v1`).
+2. Otherwise `http://${OLLAMA_HOST_IP}:11434/v1`, reusing the same `OLLAMA_HOST_IP` set in the repo `.env` for the crAPI chatbot container.
+3. Otherwise `http://127.0.0.1:11434/v1`.
 
-Override them if your setup differs:
+`OLLAMA_MODEL` defaults to `llama3.1:8b`.
+
+Since these scripts run from your host shell (not Docker), `.env` is not loaded automatically — export the variables directly, e.g.:
 
 ```bash
-export OLLAMA_BASE_URL=http://127.0.0.1:11434/v1
+export OLLAMA_HOST_IP=192.168.4.60
 export OLLAMA_MODEL=llama3.1:8b
 ```
+
+> Note the `export` keyword is required. Setting `OLLAMA_HOST_IP=192.168.4.60` without `export` only creates a shell-local variable that `conda run` (and any other subprocess) will not see, causing a `Connection refused` error against `127.0.0.1` instead.
 
 crAPI must be running locally on `http://127.0.0.1:8888`.
 
