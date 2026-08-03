@@ -57,9 +57,12 @@ Host workstation
   └─ ui/ Vite + React demo interface
 
 Ollama (local install, remote GPU box, or Docker)
-  ├─ llama3.1:8b        (chat / tool calling)
+  ├─ llama3.1:8b        (crapi-chatbot: chat / SQL+MCP tool calling / RAG)
+  ├─ qwen2.5:7b         (agent/ scripts: crAPI tool-calling demos)
   └─ nomic-embed-text:latest (embeddings)
 ```
+
+See [Model choices](#model-choices) for why the chatbot and the standalone agent scripts use different default models.
 
 ## Network layout
 
@@ -199,8 +202,11 @@ Recommended models that fit on an 8 GB GPU or a CPU host:
 
 ```bash
 ollama pull llama3.1:8b
+ollama pull qwen2.5:7b
 ollama pull nomic-embed-text:latest
 ```
+
+`llama3.1:8b` powers the built-in `crapi-chatbot` (`CHATBOT_LLM_MODEL` in `.env`); `qwen2.5:7b` powers the standalone `agent/` scripts (`OLLAMA_MODEL` env var). See [Model choices](#model-choices) for why they differ.
 
 ### 3. Expose Ollama to the network
 
@@ -245,10 +251,21 @@ export OLLAMA_MODELS=/mnt/d/OllamaModels
 This repo was developed with:
 
 - A Mac host running Docker Desktop
-- A separate Linux machine with an NVIDIA GPU running Ollama (`llama3.1:8b` and `nomic-embed-text:latest`)
-- The Mac reaching Ollama over the LAN at `http://192.168.4.55:11434/v1`
+- A separate Linux machine with an NVIDIA GPU running Ollama (`llama3.1:8b`, `qwen2.5:7b`, and `nomic-embed-text:latest`)
+- The Mac reaching Ollama over the LAN
 
 Any setup where Docker can reach Ollama at the URL you put in `.env` should work the same way.
+
+## Model choices
+
+This repo uses two different default models for two different LLM-driven components, because they aren't interchangeable — they have different tool surfaces and different prompting strategies:
+
+| Component | Default model | Config | Why |
+|---|---|---|---|
+| `crapi-chatbot` (built-in, Docker) | `llama3.1:8b` | `CHATBOT_LLM_MODEL` in `.env` | This is a LangGraph ReAct agent with a much larger and more complex toolset: a full SQL database toolkit, MCP tools, and RAG retrieval over embedded docs. It hasn't been re-benchmarked against the smaller/newer models below, so we're keeping the originally validated default rather than assuming results transfer from the narrower `agent/` test below. |
+| `agent/simple_agent.py` and `agent/ollama_agent.py` (standalone Python demos) | `qwen2.5:7b` | `OLLAMA_MODEL` env var | These scripts only expose 10 simple, well-defined crAPI wrapper functions (sign up, log in, list vehicles, etc.), so they're a much smaller surface than the chatbot. We tested five small (4B-8B) models specifically against this task; `qwen2.5:7b` was the most reliable. Full comparison and methodology in [`agent/README.md`](agent/README.md#model-compatibility-notes). |
+
+In short: **don't assume a model that works well for one agentic workload in this repo will work equally well for another** — the size and shape of the tool surface, and the prompting style, both matter a lot for small local models. If you swap either model, retest against that specific component before treating it as a drop-in replacement.
 
 ## Why the `retriever_utils.py` patch?
 

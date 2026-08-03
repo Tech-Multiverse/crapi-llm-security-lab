@@ -30,7 +30,7 @@ def _default_base_url() -> str:
 
 
 DEFAULT_BASE_URL = _default_base_url()
-DEFAULT_MODEL = os.getenv("OLLAMA_MODEL", "llama3.1:8b")
+DEFAULT_MODEL = os.getenv("OLLAMA_MODEL", "qwen2.5:7b")
 DEFAULT_API_KEY = os.getenv("OPENAI_API_KEY", "x")
 
 ACTIONS = {
