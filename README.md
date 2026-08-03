@@ -30,7 +30,7 @@ The `develop` branch of OWASP crAPI includes:
 - A root `.env` with all the configuration in one place; copy it from `.env.example` and point it at your Ollama instance.
 - A `crapi-llm` Miniconda environment for Python agent development.
 - A small patch (`infrastructure/crapi-chatbot-patches/retriever_utils.py`) that makes crAPI's chatbot use `OllamaEmbeddings` for the vector store instead of `OpenAIEmbeddings`, which sends token arrays that Ollama's OpenAI-compatible `/v1/embeddings` endpoint rejects.
-- A `agent/` directory with a custom Python agent that drives crAPI through Ollama.
+- A standalone `agent/` directory with command-line Python demos that drive crAPI through their own Ollama connection. These agents are not the same as crAPI's built-in chatbot service (`crapi-chatbot`); they call crAPI's REST APIs directly to demonstrate agentic API discovery, tool calling, and LLM-driven attacks.
 - A `gateway/` directory with a Kong gateway, rate limiting, a WAF-style path block, Prometheus metrics, and a Grafana dashboard.
 - A `ui/` directory with a Vite + React demo interface, plus `scripts/` with one-click attack/defense scenario scripts.
 
