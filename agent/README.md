@@ -8,7 +8,7 @@ A small, self-contained Python agent that drives crAPI through a local Ollama se
 |------|---------|
 | `simple_agent.py` | Main ReAct-style agent. The model emits a JSON `action`, the runner executes the matching crAPI function, and the loop continues until the model calls `done`. |
 | `crapi_client.py` | Thin `requests` wrapper for the crAPI endpoints used by the agent. |
-| `ollama_agent.py` | Alternative implementation using OpenAI-compatible tool-calling (`tools=`). See [Model compatibility notes](#model-compatibility-notes) for how different models handled this. |
+| `ollama_agent.py` | Alternative implementation of the same demos, using the OpenAI-compatible `tools=`/function-calling API instead of `simple_agent.py`'s freeform JSON-action prompt. See [Run ollama_agent.py](#run-ollama_agentpy-native-tool-calling) to try it and [Model compatibility notes](#model-compatibility-notes) for how different models handled it. |
 | `requirements.txt` | Python dependencies. |
 
 ## Setup
@@ -97,6 +97,30 @@ conda run -n crapi-llm python agent/simple_agent.py \
 > This exact phrasing matters, and was arrived at empirically. The obvious "...and use contact_mechanic to call X 50 times... Then call done with a summary" phrasing is not enough: `contact_mechanic` returns a non-2xx status here (the target path 404s), and the system prompt's rule *"If a previous action failed, choose a different action instead of repeating it"* causes the model to treat that non-2xx response as a failure and abandon the task — even with a "call done" instruction present. It then drifts into unrelated, sometimes hallucinated actions (fabricated JWTs, invented credentials, signing up unrelated accounts) until it exhausts `max_turns` without ever finishing. Explicitly telling the model (a) to call the tool exactly once, (b) that a non-200 response is still an acceptable outcome to finish on, and (c) not to call any other tool afterward, reliably prevents this drift. If you change the target URL, model, or task text, re-verify the agent still reaches `done` in 2–3 turns before relying on the demo.
 
 The agent executes the repeated outbound requests. In a real scenario, the `mechanic_api` URL could be an internal metadata service or a slow external target.
+
+## Run ollama_agent.py (native tool-calling)
+
+`simple_agent.py` prompts the model to emit a single hand-rolled JSON `{"action": ..., "args": ...}` object per turn, which the runner parses and dispatches itself. `ollama_agent.py` does the same crAPI demos, but through Ollama's OpenAI-compatible `tools=`/function-calling API instead — the same interface most real agent frameworks (LangChain, LangGraph, the OpenAI Agents SDK, etc.) actually use to let a model invoke tools. It's included so you can compare how the same model behaves under standardized native tool-calling versus a freeform JSON-action loop with the exact same crAPI tool surface. As the [Model compatibility notes](#model-compatibility-notes) below show, that's not just a style preference — a given model can be reliable with one prompting style and unreliable with the other.
+
+Supply a task as the first argument, the same way as `simple_agent.py`:
+
+```bash
+conda run -n crapi-llm python agent/ollama_agent.py \
+  'Sign up a new crAPI user named Jordan Test with a unique email like jordan.test.9482@example.com, phone number 555-0142, and password TestPass123. Then log them in, fetch their dashboard, and list their vehicles.'
+```
+
+> Give it concrete, unique account details like the example above. The script's built-in default prompt (`conda run -n crapi-llm python agent/ollama_agent.py` with no arguments) just says "Sign up a new user, log them in, and list their vehicles," which doesn't give the model any identity to use — it tends to guess the same generic test email/number every time, hit "already registered" errors, and burn several retries before landing on something unique. Supplying explicit details up front, as above, gets a clean run.
+
+Expected flow, mirroring the default `simple_agent.py` demo but via native tool calls:
+
+1. Agent issues a `sign_up` tool call.
+2. Agent issues a `log_in` tool call and captures the JWT from the result.
+3. Agent issues `get_dashboard` and `list_vehicles` tool calls using that JWT.
+4. Agent returns a final natural-language summary (there's no explicit `done` action here — the loop ends whenever the model responds without requesting another tool call).
+
+You can also point the prompt-injection demo above at `ollama_agent.py` (swap `simple_agent.py` for `ollama_agent.py` in that command) — we verified it reaches the same final summary, though it takes a couple of extra retries there since the model treats the `contact_mechanic` `404` as a failure and re-authenticates before finishing.
+
+The admin-impersonation demo, however, is **not** reliable on `ollama_agent.py` with `qwen2.5:7b` — in two separate runs, right after a successful `log_in`, the model substituted a completely fabricated JWT (wrong algorithm header, unrelated payload data lifted from its training data) for the `get_dashboard` call instead of reusing the real token, causing a `404` and an incorrect final answer claiming the admin account "is not registered." This is the same JWT-hallucination failure mode covered in [Model compatibility notes](#model-compatibility-notes), and it's a good illustration of why you shouldn't assume a demo that works in one prompting style/script will work identically in the other — always re-verify before relying on it.
 
 ## Why this is interesting
 
