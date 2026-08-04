@@ -1,6 +1,6 @@
 # crAPI-LLM Security Lab
 
-> 🎬 Project article and video walkthrough(s) coming soon — stay tuned!
+> 🎬 Project articles and video walkthroughs coming soon — stay tuned!
 
 A local, shareable lab for API security, LLM application security, and agentic AI demos.
 
