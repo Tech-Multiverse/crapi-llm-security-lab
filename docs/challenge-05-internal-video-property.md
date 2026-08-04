@@ -39,6 +39,8 @@ Example response:
 }
 ```
 
+> If `video_id` is `0` and `video_name` is `null`, the account has no profile video yet and the next steps will return `404`. Upload one first by logging into the crAPI web UI at `http://127.0.0.1:3001` (or `http://127.0.0.1:8888`), going to the profile section, and uploading a video. After uploading, the dashboard will show a non-zero `video_id`.
+
 ### 2. Request the video resource by ID
 
 ```bash
