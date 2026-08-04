@@ -1,5 +1,8 @@
 # Challenge 1 — Broken Object Level Authorization (BOLA)
 
+**OWASP API Top 10 mapping:** API1:2023 Broken Object Level Authorization  
+**crAPI category:** BOLA
+
 ## Goal
 
 Access sensitive details of another user's vehicle.

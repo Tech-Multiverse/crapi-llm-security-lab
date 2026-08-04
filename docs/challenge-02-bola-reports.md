@@ -1,5 +1,8 @@
 # Challenge 2 — Broken Object Level Authorization (BOLA) on mechanic reports
 
+**OWASP API Top 10 mapping:** API1:2023 Broken Object Level Authorization  
+**crAPI category:** BOLA
+
 ## Goal
 
 Access mechanic reports submitted by other users.
