@@ -254,3 +254,15 @@ pre {
   font-size: 0.85rem;
   margin-left: 0.25rem;
 }
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.checkbox-label input[type="checkbox"] {
+  width: auto;
+}
