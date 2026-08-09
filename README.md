@@ -1,10 +1,16 @@
 # crAPI-LLM Security Lab
 
-> 🎬 Project articles and video walkthroughs coming soon — stay tuned!
-
 A local, shareable lab for API security, LLM application security, and agentic AI demos.
 
 It combines the OWASP crAPI vulnerable API application with an Ollama LLM (local or remote), a LangGraph-based chatbot/MCP server, a custom Python agent, and an optional API gateway with traffic analysis.
+
+---
+
+[Project Overview Article](https://tech-multiverse.com/projects/introducing-my-new-api-llm-security-lab-powered-by-owasp-ollama/)
+
+> 🎬 Video walkthroughs coming soon!
+
+---
 
 ## What this is for
 
